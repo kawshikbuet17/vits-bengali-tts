@@ -1,0 +1,5 @@
+Place a real matching FLAC file here in an actual dataset:
+
+male-no-date-0001.flac
+
+This example intentionally has no date folder.

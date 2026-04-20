@@ -1,0 +1,18 @@
+{
+  "duration": 5.1,
+  "speaker_id": "01800000001",
+  "gender": "নারী",
+  "script_source": "dummy documentation sample",
+  "path": "Female/01800000001/2024-05-08/female-date-0001.flac",
+  "speech_id": "female-date-0001",
+  "annotation": [
+    {
+      "tagList": [],
+      "start": 0.42,
+      "end": 4.75,
+      "id": "sample-female-1",
+      "sentence": "বাংলা টেক্সট থেকে স্বাভাবিক কণ্ঠ তৈরি করার জন্য পরিষ্কার ডেটা দরকার।",
+      "words": []
+    }
+  ]
+}

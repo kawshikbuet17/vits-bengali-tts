@@ -1,0 +1,25 @@
+{
+  "duration": 6.66,
+  "speaker_id": "01332512906",
+  "gender": "পুরুষ",
+  "script_source": "dummy documentation sample",
+  "path": "Male/01332512906/2024-05-07/00d4da35-bebc-471b-aa92-0d9398388e98.flac",
+  "speech_id": "00d4da35-bebc-471b-aa92-0d9398388e98",
+  "annotation": [
+    {
+      "tagList": [],
+      "start": 1.07355922,
+      "end": 6.08486152,
+      "id": "rPboUgsw",
+      "sentence": "তার কথাগুলো শুনে বুঝলাম বয়সের তুলনায় সে মানসিকতায় অনেক বড় হয়ে গিয়েছে।",
+      "words": [
+        {
+          "start": 1.17355922,
+          "end": 1.43355922,
+          "id": "rPboUgsw-1",
+          "word": "তার"
+        }
+      ]
+    }
+  ]
+}

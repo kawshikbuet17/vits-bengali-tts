@@ -1,0 +1,18 @@
+{
+  "duration": 3.8,
+  "speaker_id": "01900000001",
+  "gender": "নারী",
+  "script_source": "dummy documentation sample",
+  "path": "Female/01900000001/female-no-date-0001.flac",
+  "speech_id": "female-no-date-0001",
+  "annotation": [
+    {
+      "tagList": [],
+      "start": 0.25,
+      "end": 3.45,
+      "id": "sample-female-2",
+      "sentence": "এই উদাহরণে তারিখের ফোল্ডার নেই, তবুও স্ক্রিপ্টটি ফাইল খুঁজে পাবে।",
+      "words": []
+    }
+  ]
+}

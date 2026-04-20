@@ -1,0 +1,18 @@
+{
+  "duration": 4.2,
+  "speaker_id": "01700000001",
+  "gender": "পুরুষ",
+  "script_source": "dummy documentation sample",
+  "path": "Male/01700000001/male-no-date-0001.flac",
+  "speech_id": "male-no-date-0001",
+  "annotation": [
+    {
+      "tagList": [],
+      "start": 0.35,
+      "end": 3.9,
+      "id": "sample-male-2",
+      "sentence": "এটি একটি নমুনা বাক্য যা শুধু কাঠামো বোঝানোর জন্য রাখা হয়েছে।",
+      "words": []
+    }
+  ]
+}

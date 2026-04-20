@@ -13,6 +13,7 @@ MATPLOTLIB_FLAG = False
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 logger = logging
+logging.getLogger("numba").setLevel(logging.WARNING)
 
 
 def load_checkpoint(checkpoint_path, model, optimizer=None):

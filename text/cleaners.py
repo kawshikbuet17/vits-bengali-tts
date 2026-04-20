@@ -13,12 +13,14 @@ hyperparameter. Some cleaners are English-specific. You'll typically want to use
 '''
 
 import re
+import unicodedata
 from unidecode import unidecode
 from phonemizer import phonemize
 
 
 # Regular expression matching whitespace:
 _whitespace_re = re.compile(r'\s+')
+_bengali_allowed_punctuation = set(';:,.!?…"«»“”"\'()[]{}-–—।॥‘’ ')
 
 # List of (regular expression, replacement) pairs for abbreviations:
 _abbreviations = [(re.compile('\\b%s\\.' % x[0], re.IGNORECASE), x[1]) for x in [
@@ -70,6 +72,31 @@ def basic_cleaners(text):
   text = lowercase(text)
   text = collapse_whitespace(text)
   return text
+
+
+def bengali_cleaners(text):
+  '''Character-based Bengali cleaner without transliteration or phonemization.'''
+  text = unicodedata.normalize('NFC', text)
+  text = text.replace('\ufeff', '')
+  text = text.replace('\u200c', '')
+  text = text.replace('\u200d', '')
+  text = text.replace('|', ' ')
+  text = lowercase(text)
+
+  cleaned = []
+  for char in text:
+    if char.isspace():
+      cleaned.append(' ')
+    elif '\u0980' <= char <= '\u09FF':
+      cleaned.append(char)
+    elif ord(char) < 128 and (char.isalpha() or char.isdigit()):
+      cleaned.append(char)
+    elif char in _bengali_allowed_punctuation:
+      cleaned.append(char)
+
+  text = ''.join(cleaned)
+  text = collapse_whitespace(text)
+  return text.strip()
 
 
 def transliteration_cleaners(text):
