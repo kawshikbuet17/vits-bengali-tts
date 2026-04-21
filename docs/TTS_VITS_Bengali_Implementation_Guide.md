@@ -1,8 +1,8 @@
 # TTS VITS Bengali Implementation Guide
 
-This project turns a raw Bangla/Bengali speech dataset into a runnable VITS training pipeline. The current baseline uses Bengali transcript text stored in `.json` files with matching `.flac` audio for one selected speaker, and produces a trained single-speaker Bengali TTS model that generates `.wav` speech from Bengali text. The design can be expanded later toward multi-speaker Bengali TTS.
+This project turns a raw Bangla/Bengali speech dataset into runnable VITS training pipelines. It supports a stable single-speaker path and a separate multi-speaker path; both use Bengali transcript text stored in `.json` files with matching `.flac` audio, and both produce trained models that generate `.wav` speech from Bengali text.
 
-This guide documents the Bengali single-speaker VITS baseline added to this fork and gives a beginner-friendly, sequential runbook for preparing data, training, and inference.
+This guide documents the Bengali single-speaker and multi-speaker VITS support added to this fork and gives beginner-friendly, sequential runbooks for preparing data, training, and inference.
 
 For a concise summary of the major changes from the original VITS repository, see [Major_Changes_From_Original_VITS.md](Major_Changes_From_Original_VITS.md).
 
@@ -10,19 +10,20 @@ The real dataset is on the remote Linux server. The local repository does not as
 
 ## 1. Purpose
 
-This fork adapts the original `jaywalnut310/vits` style codebase into a minimal runnable Bengali single-speaker TTS baseline.
+This fork adapts the original `jaywalnut310/vits` style codebase into runnable Bengali TTS baselines.
 
 Main design choices:
 
 - Keep the original VITS model and training flow as intact as possible.
-- Start with one Bengali speaker, not multi-speaker training.
+- Keep single-speaker and multi-speaker workflows separate.
 - Use Bengali Unicode characters directly, not phonemes.
 - Convert raw `.flac` audio to VITS-compatible `.wav` during dataset preparation.
 - Generate original VITS-style single-speaker filelists: `wav_path|text`.
+- Generate original VITS-style multi-speaker filelists: `wav_path|speaker_index|text`.
 
-## 2. Why This Starts As Single-Speaker
+## 2. Why Single-Speaker Remains The First Baseline
 
-This Bengali adaptation intentionally starts as a single-speaker VITS baseline.
+This Bengali adaptation keeps the single-speaker VITS baseline as the first recommended path.
 
 The purpose is to first prove that the complete Bengali pipeline works end to end:
 
@@ -71,18 +72,68 @@ write single-speaker filelists
 
 This explains why a preparation run may find many files but keep only a small subset. For example, a previous run found `148026` JSON files and kept `224` records for one selected speaker. That is expected for this baseline.
 
-For another speaker, run preparation again with a different `--speaker-id`, then preprocess and train a separate model name. This project currently treats each speaker as a separate single-speaker experiment.
+For another single-speaker model, run preparation again with a different `--speaker-id`, then preprocess and train a separate model name.
 
-## 3. Files Added
+## 3. Multi-Speaker Path Summary
+
+Multi-speaker Bengali VITS is now added as a separate path. It does not replace the single-speaker baseline.
+
+The multi-speaker path trains one model that can synthesize multiple voices. The model learns a speaker embedding for every speaker index.
+
+Multi-speaker filelists use:
+
+```text
+wav_path|speaker_index|text
+```
+
+The original raw dataset speaker IDs are mapped to numeric indices in:
+
+```text
+speaker_map.json
+```
+
+Example:
+
+```json
+{
+  "01332512906": 0,
+  "01800000001": 1,
+  "01700000001": 2
+}
+```
+
+Multi-speaker training uses:
+
+```bash
+python train_ms.py -c configs/bengali_ms.generated.json -m bengali_ms
+```
+
+Single-speaker and multi-speaker commands are different:
+
+```text
+single-speaker: wav_path|text                 -> train.py
+multi-speaker:  wav_path|speaker_index|text   -> train_ms.py
+```
+
+## 4. Files Added
 
 - `scripts/prepare_bengali_dataset.py`
-  Recursively scans the raw Bengali dataset, filters one speaker, pairs `.json` and `.flac`, extracts transcript text, converts audio, and writes train/val/test filelists.
+  Single-speaker only. Recursively scans the raw Bengali dataset, filters one speaker, pairs `.json` and `.flac`, extracts transcript text, converts audio, and writes `wav_path|text` train/val/test filelists.
+
+- `scripts/prepare_bengali_ms_dataset.py`
+  Multi-speaker only. Recursively scans the raw Bengali dataset, keeps multiple speakers, creates `speaker_map.json`, converts audio, and writes `wav_path|speaker_index|text` train/val/test filelists.
 
 - `scripts/infer_bengali.py`
-  Minimal command-line inference script for Bengali checkpoints.
+  Single-speaker command-line inference script for Bengali checkpoints.
+
+- `scripts/infer_bengali_ms.py`
+  Multi-speaker command-line inference script. It accepts either `--speaker-index` or `--speaker-id` with `--speaker-map`.
 
 - `configs/bengali_base.json`
-  Single-speaker Bengali training config.
+  Single-speaker Bengali training config for `train.py`.
+
+- `configs/bengali_ms.json`
+  Multi-speaker Bengali config template for `train_ms.py`. The multi-speaker prep script can generate `configs/bengali_ms.generated.json` with the correct `n_speakers`.
 
 - `docs/TTS_VITS_Bengali_Implementation_Guide.md`
   This complete implementation and running guide.
@@ -93,7 +144,7 @@ For another speaker, run preparation again with a different `--speaker-id`, then
 - `environment_snapshots/`
   Exported package, Python, PyTorch/CUDA, and GPU/driver details from the working remote server environment.
 
-## 4. Files Modified
+## 5. Files Modified
 
 - `text/symbols.py`
   Adds Bengali symbols and the Bengali Unicode block to the original symbol table.
@@ -119,7 +170,7 @@ For another speaker, run preparation again with a different `--speaker-id`, then
 - `README.md`
   Points to this Bengali implementation guide.
 
-## 5. Dataset Contract
+## 6. Dataset Contract
 
 The remote raw dataset root is expected to look approximately like this:
 
@@ -239,7 +290,7 @@ After preparation, Bengali training uses the same single-speaker filelist style 
 /home/kawshik/TTS_Dataset_vits_bengali_22050/wavs/.../utterance.wav|তার কথাগুলো শুনে বুঝলাম বয়সের তুলনায় সে মানসিকতায় অনেক বড় হয়ে গিয়েছে।
 ```
 
-## 6. Dummy Dataset Example
+## 7. Dummy Dataset Example
 
 A small structural example is included here:
 
@@ -274,7 +325,7 @@ docs/sample_bengali_raw_dataset/
 
 Your real remote dataset must contain a valid matching `.flac` file beside, or discoverable from, each JSON file.
 
-## 7. Transcript Extraction
+## 8. Transcript Extraction
 
 `scripts/prepare_bengali_dataset.py` extracts text like this:
 
@@ -292,7 +343,7 @@ Skipped examples are recorded in:
 <PREPARED_ROOT>/bengali_prep_skipped.tsv
 ```
 
-## 8. Audio Conversion
+## 9. Audio Conversion
 
 The raw dataset audio is `.flac`, but original VITS reads WAV using `scipy.io.wavfile.read`.
 
@@ -316,7 +367,7 @@ Example:
 /home/kawshik/TTS_Dataset_vits_bengali_22050/wavs/...
 ```
 
-## 9. Bengali Text Processing
+## 10. Bengali Text Processing
 
 This baseline uses Bengali characters directly.
 
@@ -339,9 +390,9 @@ Bengali text -> cleaned Bengali Unicode characters -> symbol IDs
 
 Bengali conjuncts are represented as normal Unicode character sequences using `্`.
 
-## 10. Filelist Generation
+## 11. Filelist Generation
 
-The dataset preparation script writes original VITS single-speaker filelists:
+Single-speaker preparation writes original VITS single-speaker filelists:
 
 ```text
 wav_path|text
@@ -364,7 +415,38 @@ filelists/bengali_audio_text_val_filelist.txt.cleaned
 
 These are already configured in `configs/bengali_base.json`.
 
-## 11. Step-By-Step Running Guide
+Multi-speaker preparation writes original VITS multi-speaker filelists:
+
+```text
+wav_path|speaker_index|text
+```
+
+Generated files:
+
+```text
+filelists/bengali_ms_audio_sid_text_train_filelist.txt
+filelists/bengali_ms_audio_sid_text_val_filelist.txt
+filelists/bengali_ms_audio_sid_text_test_filelist.txt
+```
+
+After text preprocessing, multi-speaker VITS trains from:
+
+```text
+filelists/bengali_ms_audio_sid_text_train_filelist.txt.cleaned
+filelists/bengali_ms_audio_sid_text_val_filelist.txt.cleaned
+```
+
+The multi-speaker prep script also writes:
+
+```text
+<PREPARED_ROOT>/speaker_map.json
+<PREPARED_ROOT>/speaker_stats.tsv
+configs/bengali_ms.generated.json
+```
+
+`configs/bengali_ms.generated.json` is created from `configs/bengali_ms.json` and contains the correct `n_speakers` value for that prepared speaker set.
+
+## 12. Step-By-Step Running Guide
 
 Run these steps on the remote Linux server from the repository root.
 
@@ -444,7 +526,7 @@ python setup.py build_ext --inplace
 cd ..
 ```
 
-### Step 6: Prepare Dataset
+### Step 6A: Prepare Dataset For Single-Speaker Training
 
 Set these values:
 
@@ -502,7 +584,7 @@ Report: /home/kawshik/TTS_Dataset_vits_bengali_22050/bengali_prep_report.json
 
 The high skipped count is expected here because the script scanned all speakers but kept only one selected `speaker_id`.
 
-### Step 7: Review Prep Output
+### Step 7A: Review Single-Speaker Prep Output
 
 ```bash
 cat /home/kawshik/TTS_Dataset_vits_bengali_22050/bengali_prep_report.json
@@ -518,7 +600,7 @@ Check:
 
 A large skipped count is normal when filtering one speaker from a multi-speaker dataset.
 
-### Step 8: Preprocess Text
+### Step 8A: Preprocess Single-Speaker Text
 
 ```bash
 python preprocess.py \
@@ -537,7 +619,7 @@ ls -lh filelists/bengali_audio_text_*cleaned
 head filelists/bengali_audio_text_train_filelist.txt.cleaned
 ```
 
-### Step 9: Start Training
+### Step 9A: Start Single-Speaker Training
 
 For physical GPU 1:
 
@@ -589,7 +671,7 @@ tail -f logs/bengali_base/train.log
 watch -n 2 nvidia-smi
 ```
 
-### Step 10: Find A Checkpoint
+### Step 10A: Find A Single-Speaker Checkpoint
 
 ```bash
 ls logs/bengali_base/G_*.pth
@@ -601,7 +683,7 @@ Example:
 logs/bengali_base/G_1000.pth
 ```
 
-### Step 11: Run Inference
+### Step 11A: Run Single-Speaker Inference
 
 Replace `<STEP>` with a real checkpoint step:
 
@@ -622,7 +704,156 @@ Output:
 outputs/bengali_sample.wav
 ```
 
-## 12. Common Problems And Fixes
+### Step 6B: Prepare Dataset For Multi-Speaker Training
+
+Multi-speaker preparation keeps multiple speakers and writes `wav_path|speaker_index|text` filelists.
+
+For the first multi-speaker experiment, start with a small clean subset such as 5-10 speakers. You can select speakers explicitly:
+
+```bash
+python scripts/prepare_bengali_ms_dataset.py \
+  --dataset-root /home/kawshik/TTS_Dataset \
+  --output-root /home/kawshik/TTS_Dataset_vits_bengali_ms_22050 \
+  --speaker-ids 01332512906,01800000001,01700000001 \
+  --sample-rate 22050 \
+  --val-ratio 0.02 \
+  --test-ratio 0.02 \
+  --seed 1234 \
+  --min-duration 0.5 \
+  --max-duration 11.5 \
+  --max-text-chars 250 \
+  --min-utterances-per-speaker 50 \
+  --max-utterances-per-speaker 300
+```
+
+Or let the script choose the top speakers by kept utterance count:
+
+```bash
+python scripts/prepare_bengali_ms_dataset.py \
+  --dataset-root /home/kawshik/TTS_Dataset \
+  --output-root /home/kawshik/TTS_Dataset_vits_bengali_ms_22050 \
+  --sample-rate 22050 \
+  --val-ratio 0.02 \
+  --test-ratio 0.02 \
+  --seed 1234 \
+  --min-duration 0.5 \
+  --max-duration 11.5 \
+  --max-text-chars 250 \
+  --min-utterances-per-speaker 200 \
+  --max-speakers 10 \
+  --max-utterances-per-speaker 500
+```
+
+Expected multi-speaker outputs:
+
+```text
+filelists/bengali_ms_audio_sid_text_train_filelist.txt
+filelists/bengali_ms_audio_sid_text_val_filelist.txt
+filelists/bengali_ms_audio_sid_text_test_filelist.txt
+/home/kawshik/TTS_Dataset_vits_bengali_ms_22050/speaker_map.json
+/home/kawshik/TTS_Dataset_vits_bengali_ms_22050/speaker_stats.tsv
+configs/bengali_ms.generated.json
+```
+
+### Step 7B: Review Multi-Speaker Prep Output
+
+```bash
+cat /home/kawshik/TTS_Dataset_vits_bengali_ms_22050/bengali_ms_prep_report.json
+cat /home/kawshik/TTS_Dataset_vits_bengali_ms_22050/speaker_map.json
+head /home/kawshik/TTS_Dataset_vits_bengali_ms_22050/speaker_stats.tsv
+head filelists/bengali_ms_audio_sid_text_train_filelist.txt
+```
+
+Check:
+
+- `speakers_kept` is greater than `1` for real multi-speaker training.
+- `speakers_kept` equal to `1` is only useful as a smoke test for the multi-speaker code path.
+- `records_kept` is large enough for training.
+- `configs/bengali_ms.generated.json` has `n_speakers` equal to the speaker count.
+- filelist lines look like `wav_path|speaker_index|text`.
+
+### Step 8B: Preprocess Multi-Speaker Text
+
+Multi-speaker text is column index `2`:
+
+```text
+wav_path|speaker_index|text
+```
+
+Run:
+
+```bash
+python preprocess.py \
+  --text_index 2 \
+  --text_cleaners bengali_cleaners \
+  --filelists \
+  filelists/bengali_ms_audio_sid_text_train_filelist.txt \
+  filelists/bengali_ms_audio_sid_text_val_filelist.txt \
+  filelists/bengali_ms_audio_sid_text_test_filelist.txt
+```
+
+Confirm:
+
+```bash
+ls -lh filelists/bengali_ms_audio_sid_text_*cleaned
+head filelists/bengali_ms_audio_sid_text_train_filelist.txt.cleaned
+```
+
+### Step 9B: Start Multi-Speaker Training
+
+For physical GPU 1:
+
+```bash
+CUDA_VISIBLE_DEVICES=1 python train_ms.py -c configs/bengali_ms.generated.json -m bengali_ms
+```
+
+Use a different model name for different speaker sets:
+
+```bash
+CUDA_VISIBLE_DEVICES=1 python train_ms.py -c configs/bengali_ms.generated.json -m bengali_ms_top10
+```
+
+### Step 10B: Find A Multi-Speaker Checkpoint
+
+```bash
+ls logs/bengali_ms/G_*.pth
+```
+
+Example:
+
+```text
+logs/bengali_ms/G_1000.pth
+```
+
+### Step 11B: Run Multi-Speaker Inference
+
+Using the original raw dataset speaker ID:
+
+```bash
+python scripts/infer_bengali_ms.py \
+  --config configs/bengali_ms.generated.json \
+  --checkpoint logs/bengali_ms/G_<STEP>.pth \
+  --speaker-map /home/kawshik/TTS_Dataset_vits_bengali_ms_22050/speaker_map.json \
+  --speaker-id 01332512906 \
+  --text "আমি বাংলা ভাষায় কথা বলি।" \
+  --output outputs/bengali_ms_01332512906.wav \
+  --noise-scale 0.667 \
+  --noise-scale-w 0.8 \
+  --length-scale 1.0
+```
+
+Using a direct numeric speaker index:
+
+```bash
+python scripts/infer_bengali_ms.py \
+  --config configs/bengali_ms.generated.json \
+  --checkpoint logs/bengali_ms/G_<STEP>.pth \
+  --speaker-index 0 \
+  --text "আমি বাংলা ভাষায় কথা বলি।" \
+  --output outputs/bengali_ms_speaker0.wav
+```
+
+## 13. Common Problems And Fixes
 
 ### Old PyTorch GPU Error
 
@@ -678,9 +909,13 @@ Error:
 FileNotFoundError: filelists/bengali_audio_text_train_filelist.txt.cleaned
 ```
 
-Fix:
+Fix for single-speaker:
 
-Run Step 8.
+Run Step 8A.
+
+Fix for multi-speaker:
+
+Run Step 8B and make sure `--text_index 2` was used.
 
 ### CUDA Out Of Memory
 
@@ -700,18 +935,20 @@ or:
 
 If only a few hundred utterances are kept for one speaker, the pipeline can run, but quality may be weak from scratch. More clean data for one speaker usually improves results.
 
-## 13. Important Assumptions
+## 14. Important Assumptions
 
-- This is a single-speaker baseline.
-- The selected `speaker_id` should represent one consistent voice.
+- The single-speaker path trains one model for one selected `speaker_id`.
+- The multi-speaker path trains one model for multiple speaker indices.
+- For single-speaker, the selected `speaker_id` should represent one consistent voice.
+- For multi-speaker, `speaker_map.json` maps raw speaker IDs to numeric speaker indices.
 - Audio is converted to 22050 Hz because the config uses `sampling_rate: 22050`.
 - Text is character-based Bengali, not phoneme-based Bengali.
-- The prep script relies on JSON metadata duration for duration filtering.
+- The prep scripts rely on JSON metadata duration for duration filtering.
 - The real dataset must contain valid `.flac` audio; the docs sample dataset is only structural.
 
-## 14. Future Direction: Multi-Speaker Bengali VITS
+## 15. Multi-Speaker Notes
 
-Multi-speaker Bengali VITS is a planned future direction, not implemented in this baseline yet.
+Multi-speaker Bengali VITS is now available as a separate runnable path.
 
 The goal of multi-speaker training would be to train one model that can synthesize multiple voices. Instead of creating one model per speaker, the model would learn a speaker embedding for each speaker.
 
@@ -745,14 +982,14 @@ The original dataset speaker IDs would need a stable numeric mapping:
 }
 ```
 
-A future multi-speaker implementation should add:
+The current implementation adds:
 
-- a Bengali multi-speaker preparation script or mode
+- a Bengali multi-speaker preparation script
 - speaker filtering by minimum utterance count or minimum duration
 - `speaker_id` to numeric `speaker_index` mapping
 - saved `speaker_map.json`
 - train/val/test filelists in `wav_path|speaker_index|text` format
-- a Bengali multi-speaker config such as `configs/bengali_ms.json`
+- a Bengali multi-speaker config template and generated config
 - training through `train_ms.py`
 - inference that accepts a speaker index or original speaker ID
 
@@ -762,33 +999,42 @@ The config would use:
 "n_speakers": <number_of_speakers>
 ```
 
-and training would use:
+The generated config sets this automatically. Training uses:
 
 ```bash
-CUDA_VISIBLE_DEVICES=1 python train_ms.py -c configs/bengali_ms.json -m bengali_ms
+CUDA_VISIBLE_DEVICES=1 python train_ms.py -c configs/bengali_ms.generated.json -m bengali_ms
 ```
 
-Recommended future workflow:
+Recommended multi-speaker workflow:
 
 1. Finish and listen to the single-speaker baseline.
 2. Train a few separate single-speaker models to identify clean speakers.
 3. Select speakers with enough clean, consistent audio.
-4. Build the multi-speaker filelist and speaker map.
+4. Build the multi-speaker filelist and speaker map with `scripts/prepare_bengali_ms_dataset.py`.
 5. Train with `train_ms.py`.
 6. Evaluate whether each speaker identity is preserved during inference.
 
-Multi-speaker training should come after this baseline is stable because it adds more failure points: unbalanced speakers, noisy speakers, speaker ID mistakes, and inference-time speaker selection.
+Multi-speaker training should be tested with a small clean speaker set first because it adds more failure points: unbalanced speakers, noisy speakers, speaker ID mistakes, and inference-time speaker selection.
 
-## 15. Known Limitations And Next Steps
+For quick smoke tests, you can keep only one speaker or cap each speaker:
+
+```bash
+--speaker-ids 01332512906
+--max-utterances-per-speaker 100
+```
+
+That verifies the multi-speaker code path, but it is not true multi-speaker training. True multi-speaker training requires at least two speakers in `speaker_map.json`.
+
+## 16. Known Limitations And Next Steps
 
 - No Bengali number/date normalization yet.
 - No Bengali G2P or phoneme pipeline yet.
-- No multi-speaker training yet. The planned direction is documented above.
+- Multi-speaker support is available, but speaker quality and balance still need manual review.
 - No automatic audio quality scoring.
 - No silence trimming yet.
-- Future improvements can add multi-speaker support, richer Bengali normalization, and better dataset validation.
+- Future improvements can add richer Bengali normalization, better speaker selection, and better dataset validation.
 
-## 16. Environment Snapshots
+## 17. Environment Snapshots
 
 The folder `environment_snapshots/` records the package and GPU environment that was used successfully on the remote server.
 

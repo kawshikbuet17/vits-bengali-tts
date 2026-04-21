@@ -2,17 +2,13 @@
 
 This document gives a high-level summary of how this fork differs from the original `jaywalnut310/vits` repository.
 
-The purpose of the fork is simple: keep the original VITS model and training flow mostly intact, but add a runnable Bangla/Bengali single-speaker TTS baseline for a raw `.flac` + `.json` dataset.
+The purpose of the fork is simple: keep the original VITS model and training flow mostly intact, but add runnable Bangla/Bengali single-speaker and multi-speaker TTS paths for a raw `.flac` + `.json` dataset.
 
 ## 1. What This Fork Adds
 
-Original VITS expects data to already be in VITS-friendly form: WAV audio plus filelists such as:
+Original VITS expects data to already be in VITS-friendly form: WAV audio plus filelists.
 
-```text
-wav_path|text
-```
-
-This fork adds the missing Bengali dataset bridge:
+This fork adds the Bengali dataset bridge:
 
 ```text
 raw Bengali .flac + .json dataset
@@ -21,7 +17,12 @@ raw Bengali .flac + .json dataset
   -> Bengali speech inference
 ```
 
-The current implementation is single-speaker first. Multi-speaker Bengali support is a future direction.
+Two Bengali paths are now available:
+
+```text
+single-speaker: wav_path|text               -> train.py
+multi-speaker:  wav_path|speaker_index|text -> train_ms.py
+```
 
 ## 2. Dataset Support
 
@@ -55,11 +56,7 @@ Text is extracted from:
 annotation[*]["sentence"]
 ```
 
-The new preparation script converts this raw structure into the original VITS single-speaker filelist pattern:
-
-```text
-wav_path|text
-```
+The preparation scripts convert this raw structure into the filelist structures expected by VITS.
 
 ## 3. Bengali Text Support
 
@@ -72,15 +69,18 @@ This fork adds a simple Bengali character-based path:
 - English-only assumptions are avoided for the Bengali baseline.
 - Bengali text is represented directly as characters first, not phonemes.
 
-This is intentionally minimal so the first baseline can run before adding more advanced Bengali normalization or G2P.
+This is intentionally minimal so the first baselines can run before adding more advanced Bengali normalization or G2P.
 
 ## 4. Training And Inference Additions
 
 This fork adds:
 
-- a Bengali dataset preparation script
-- a Bengali single-speaker training config
-- a Bengali command-line inference script
+- single-speaker Bengali dataset preparation
+- multi-speaker Bengali dataset preparation
+- single-speaker Bengali training config
+- multi-speaker Bengali config template and generated config support
+- single-speaker Bengali command-line inference
+- multi-speaker Bengali command-line inference with speaker selection
 - Bengali-specific documentation and sample raw dataset layout
 
 The core model architecture is not broadly refactored.
@@ -121,10 +121,10 @@ New documentation explains:
 - what this project does
 - input and output of the Bengali TTS pipeline
 - original VITS dataset pattern vs Bengali raw dataset pattern
-- why the current baseline is single-speaker
+- which commands are for single-speaker and which are for multi-speaker
 - how to prepare data, train, and run inference
 - what changed from original VITS
-- known limitations and future multi-speaker direction
+- known limitations and next steps
 
 Main docs:
 
@@ -139,14 +139,14 @@ docs/Major_Changes_From_Original_VITS.md
 The fork intentionally preserves the original style of the repository:
 
 - `train.py` is still used for single-speaker training.
-- `train_ms.py` is still available for future multi-speaker work.
+- `train_ms.py` is used for multi-speaker training.
 - original configs and filelists are kept.
 - the VITS model structure is not rewritten.
-- Bengali support is added as a focused path rather than a full refactor.
+- Bengali support is added as focused paths rather than a full refactor.
 
 ## 9. Current Status
 
-The Bengali baseline has reached the first successful end-to-end milestone:
+The Bengali single-speaker path has reached the first successful end-to-end milestone:
 
 - dataset preparation ran on the remote dataset
 - Bengali filelists were generated
@@ -154,19 +154,20 @@ The Bengali baseline has reached the first successful end-to-end milestone:
 - CUDA training started and saved checkpoints
 - inference generated audible Bengali speech
 
-The first generated voice is audible but not yet clear or fully understandable. That is expected for the current early baseline, especially with a small number of utterances for the selected speaker.
+The multi-speaker path has been added as a runnable code path and should be tested next on a small clean speaker subset before scaling to many speakers.
 
-## 10. Future Direction
+One-speaker multi-speaker runs can be used as a smoke test, but true multi-speaker training requires at least two speakers in the generated `speaker_map.json`.
 
-Future work can expand this baseline with:
+## 10. Next Steps
 
-- multi-speaker Bengali training
-- speaker mapping and `speaker_map.json`
-- multi-speaker filelists in `wav_path|speaker_index|text` format
+Future work can improve the Bengali paths with:
+
 - better speaker selection
+- better speaker balancing for multi-speaker training
 - Bengali number/date normalization
 - optional Bengali phoneme or G2P support
 - audio quality checks and silence trimming
+- listening-based evaluation across checkpoints and speakers
 
 ---
 

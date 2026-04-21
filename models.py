@@ -1,5 +1,6 @@
 import copy
 import math
+import warnings
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -453,7 +454,13 @@ class SynthesizerTrn(nn.Module):
     else:
       self.dp = DurationPredictor(hidden_channels, 256, 3, 0.5, gin_channels=gin_channels)
 
-    if n_speakers > 1:
+    if n_speakers == 1:
+      warnings.warn(
+          "n_speakers is 1 with speaker conditioning enabled. This can be used "
+          "as a train_ms.py smoke test, but it is not true multi-speaker "
+          "training. Use n_speakers >= 2 for real multi-speaker Bengali VITS.",
+          RuntimeWarning)
+    if n_speakers > 0:
       self.emb_g = nn.Embedding(n_speakers, gin_channels)
 
   def forward(self, x, x_lengths, y, y_lengths, sid=None):

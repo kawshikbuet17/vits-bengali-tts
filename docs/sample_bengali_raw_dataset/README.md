@@ -1,6 +1,9 @@
 # Sample Bengali Raw Dataset Layout
 
-This folder is a tiny structural example for `scripts/prepare_bengali_dataset.py`.
+This folder is a tiny structural example for both Bengali preparation paths:
+
+- single-speaker: `scripts/prepare_bengali_dataset.py`
+- multi-speaker: `scripts/prepare_bengali_ms_dataset.py`
 
 It is **not** a runnable training dataset because it does not include a valid `.flac` audio file. The real remote dataset must contain matching `.flac` and `.json` files for each utterance.
 
@@ -39,7 +42,7 @@ The sample JSON in this folder shows the metadata shape and transcript location:
 annotation[*]["sentence"]
 ```
 
-Do not use this folder for training unless you replace the placeholder with a real `.flac` file.
+Do not use this folder for training unless you replace the placeholder files with real matching `.flac` files.
 
 ---
 
