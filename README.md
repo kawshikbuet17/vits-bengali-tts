@@ -8,6 +8,8 @@ This repository is a lightly modified fork of the original [`jaywalnut310/vits`]
 
 For Bengali training, start with the complete step-by-step guide: [docs/TTS_VITS_Bengali_Implementation_Guide.md](docs/TTS_VITS_Bengali_Implementation_Guide.md).
 
+If you are new to TTS and VITS concepts, start with the beginner-friendly guide: [docs/TTS_VITS_Beginner_Guide.md](docs/TTS_VITS_Beginner_Guide.md).
+
 For a concise summary of what changed from the original VITS repository, see [docs/Major_Changes_From_Original_VITS.md](docs/Major_Changes_From_Original_VITS.md).
 
 Main Bengali additions:

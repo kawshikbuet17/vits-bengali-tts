@@ -6,6 +6,8 @@ This guide documents the Bengali single-speaker and multi-speaker VITS support a
 
 For a concise summary of the major changes from the original VITS repository, see [Major_Changes_From_Original_VITS.md](Major_Changes_From_Original_VITS.md).
 
+If you are new to TTS and VITS concepts, start with the beginner-friendly guide: [TTS_VITS_Beginner_Guide.md](TTS_VITS_Beginner_Guide.md).
+
 The real dataset is on the remote Linux server. The local repository does not assume access to that dataset.
 
 ## 1. Purpose
